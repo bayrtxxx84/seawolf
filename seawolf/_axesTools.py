@@ -2,6 +2,7 @@
 # Tools for Axes manage
 # =============================================================================
 import math
+import numpy as np
 from operator import contains
 from string import Template
 
@@ -27,12 +28,22 @@ class _axTools(object):
     )
 
     def gca(ax):
+        """
+         Set the current axes. This is a convenience function to make it easier to use : func : ` pylab. gca ` without having to re - create the axes in the meantime.
+
+         @param ax - the axis to set the current axes to. If you don't want to change the current axes use
+        """
         if isinstance(ax, _mpl.axes._subplots.SubplotBase):
             return ax
         else:
             return _plt.gca()
 
     def orient(ax=None):
+        """
+         Orient the axes. This is a no - op if ax is None
+
+         @param ax - axis to orient. If None a new axis is created
+        """
         orient = "v"
         factor = 0
         axes = _axTools.get_axes(ax)
@@ -58,6 +69,11 @@ class _axTools(object):
         return orient, factor
 
     def get_axes(ax=None):
+        """
+         Get or set the Axes object. This is a low - level function to allow you to get an Axes object from a list of axes or a single axes
+
+         @param ax - If None ( default ) the current axes is returned
+        """
         axes = []
         if isinstance(ax, _sns.axisgrid.FacetGrid):
             axes = ax.axes[0]
@@ -68,6 +84,12 @@ class _axTools(object):
         return axes
 
     def getColorList(size: int, color):
+        """
+         Returns a list of colors that can be used to draw a color. The list is sorted by color and size
+
+         @param size - the size of the color list
+         @param color - the color to draw ( one of L { twisted. internet. colors. BGR }
+        """
         colors = list()
         if type(color) is str:
             colors = [color] * size
@@ -84,6 +106,14 @@ class _axTools(object):
         return colors
 
     def values_bars(ax=None, normBy: str() = "c", loc: str() = "top", stack=False):
+        """
+         Plot values of a function. This is a wrapper around plot_bars that does not require matplotlib
+
+         @param ax - axis to plot on.
+         @param normBy - normalization method to use.
+         @param loc - location to plot ( top bottom ). Default top
+         @param stack - if True plot stack instead of normalizing. Default
+        """
         pos = 0
         orient, factor = _axTools.orient(ax)
         data = _pd.DataFrame(
@@ -186,6 +216,12 @@ class _axTools(object):
         return data
 
     def values_line(ax, orient):
+        """
+         Draws a line between values. This is a wrapper around : func : ` matplotlib. Axes. values ` that does not need to be implemented by subclasses
+
+         @param ax - axis on which to draw
+         @param orient - orientation of the line ( horizontal or vertical )
+        """
         lnum = 0
         data = _pd.DataFrame(
             columns=["x", "y", "value", "value_norm", "index_color", "ax", "type"]
@@ -242,6 +278,11 @@ class _axTools(object):
         return data.drop("index", axis=1)
 
     def values_points(ax):
+        """
+         Return a list of points that can be plotted. This is useful for plotting data that is not a plot but a series of plot points.
+
+         @param ax - Axes on which to plot the data. If None the plot will be shown on the current axes
+        """
         data = _pd.DataFrame(
             columns=["x", "y", "value", "value_norm", "index_color", "ax", "type"]
         )
@@ -267,10 +308,9 @@ class _axTools(object):
     def plot_values(
         ax=None,
         data: _pd.DataFrame = None,
-        minvalue: float = 0.0,
+        minvalue: float = -np.Infinity,
+        maxvalue: float = np.Infinity,
         dec: int = 2,
-        ha: str = "auto",
-        va: str = "auto",
         fontsize=_mpl.rcParams["font.size"],
         fontweight: str = "normal",
         color="white",
@@ -278,10 +318,27 @@ class _axTools(object):
         prefix: str = "",
         postfix: str = "",
         orient: str = "v",
-        **kwargs
+        **kwargs,
     ):
+        """
+        Plot values as a 2D plot. This is a wrapper around matplotlib. pyplot. plot_values that allows you to specify the minimum and maximum values to plot in one call.
+
+        @param ax - matplotlib axis ( default : None ) If provided the plot will be added to this axis
+        @param data - pandas DataFrame ( default : None ) If provided the plot
+        @param minvalue
+        @param dec
+        @param fontsize
+        @param fontweight
+        @param color
+        @param display
+        @param prefix
+        @param postfix
+        @param orient
+        """
         # Initial variables
-        te_mplate = _axTools.te_mplate_print_value(display)
+        template = _axTools.template_print_value(display)
+        va = kwargs["va"]
+        ha = kwargs["ha"]
         if fontsize.isnumeric():
             fontsize = fontsize * 0.6 if fontsize > 10 else fontsize - 2
         axes = _axTools.get_axes(ax)
@@ -322,10 +379,12 @@ class _axTools(object):
                 value = row[2]
                 value_norm = round(row[3] * 100, dec)
                 graph = row[6]
+
+                valid_value = True
                 if isDigit(value) and (minvalue is not None):
-                    valid_value = True if value >= minvalue else False
-                else:
-                    valid_value = True
+                    valid_value = (
+                        True if (value >= minvalue and value <= maxvalue) else False
+                    )
 
                 if valid_value:
                     # Choosing graph type
@@ -348,14 +407,14 @@ class _axTools(object):
                             x,
                             y,
                             prefix
-                            + te_mplate.substitute(value=value, value_norm=value_norm)
+                            + template.substitute(value=value, value_norm=value_norm)
                             + postfix,
                             fontsize=fontsize,
                             color=c,
                             ha=ha_h,
                             va=va_h,
                             fontweight=fontweight,
-                            **kwargs
+                            **kwargs,
                         )
                     else:
                         ha_h = "center" if ha == "auto" else ha
@@ -366,7 +425,7 @@ class _axTools(object):
                                 x,
                                 y,
                                 prefix
-                                + te_mplate.substitute(
+                                + template.substitute(
                                     value=value, value_norm=value_norm
                                 )
                                 + postfix,
@@ -375,7 +434,7 @@ class _axTools(object):
                                 ha=ha_h,
                                 va=va_h,
                                 fontweight=fontweight,
-                                **kwargs
+                                **kwargs,
                             )
                         elif graph == "point":
                             text = g.text(
@@ -386,7 +445,7 @@ class _axTools(object):
                                 ha=ha_h,
                                 va=va_h,
                                 color=c,
-                                **kwargs
+                                **kwargs,
                             )
                     if shadow > 0:
                         text.set_path_effects(
@@ -399,6 +458,11 @@ class _axTools(object):
                         )
 
     def normalize_data(df: _pd.DataFrame = None):
+        """
+        Normalize data to make it easier to read. This is a no - op if data is already normalized
+
+        @param df - pandas DataFrame
+        """
         data = df.copy(deep=True)
         # Normalize data values
         grp = data.groupby(["type", "index_color"], as_index=False)["value"].sum()
@@ -410,6 +474,16 @@ class _axTools(object):
         return data
 
     def values_pie(ax, valid_wedges, frm, fontsize, dec, minvalue):
+        """
+        Plot pie chart values. This is a wrapper around plot_values.
+
+        @param ax - Axes to plot on. Must have been created before.
+        @param valid_wedges - List of valid edge positions.
+        @param frm - Font to use for plot. If None defaults to font_size ( 1 ).
+        @param fontsize - Font size in points. If None defaults to fontsize ( 1 ).
+        @param dec - Decalization parameter passed to plot_values.
+        @param minvalue - Minimum value to plot ( default 0 )
+        """
         data = _pd.DataFrame()
         x = y = list()
         val_list = label_list = list()
@@ -438,11 +512,15 @@ class _axTools(object):
                     xy=(data.x[i], data.y[i]),
                     fontsize=fontsize,
                     xytext=((0.75 * data.x[i]), (0.45 * data.y[i])),
-                    **kw
+                    **kw,
                 )
         return data
 
-    def te_mplate_print_value(display: str = str()):
+    def template_print_value(display: str = str()):
+        """
+        @brief Prints the value of template_display. It is used to check if there is a value in template_display and if it is print it.
+        @param display the value to print ( default : None )
+        """
         if display == "f":
             template = Template("$value\n$value_norm%")
         elif display == "v":
@@ -462,6 +540,15 @@ class _axTools(object):
         inplace_kwargs=False,
         defaults: dict = {},
     ) -> tuple:
+        """
+        @brief Get kwargs to be used for initialization. This is a wrapper around : func : ` dict. get ` to allow the user to specify a set of keyword arguments that will be used to initialize the model.
+        @param kwargs A dictionary of keyword arguments to be initialized.
+        @param remove_kwargs If True the kwargs will be removed from the initial kwargs.
+        @param get_d If True the dictionary will be returned as - is.
+        @param inplace_kwargs If True the kwargs will be copied to the new dictionary instead of returned.
+        @param defaults A dictionary of default values to be used for initialization.
+        @return A tuple of the same length as the ` ` kwargs ` ` dictionary
+        """
         keys = {
             "color": style.get_ticksColor(),
             "colors": style.get_ticksColor(),
@@ -473,6 +560,8 @@ class _axTools(object):
             "shadowcolor": style.get_axesColor(),
             "xpad": 0,
             "ypad": 0,
+            "va": "top",
+            "ha": "center",
         }
 
         for k, v in defaults.items():

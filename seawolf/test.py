@@ -18,10 +18,10 @@ titanic = pd.read_csv(url)
 sw.style.set(figsize=(8, 6))
 
 ax = sns.countplot(data=titanic, y="pclass", hue='sex')
-start = time.time()
-sw.show_values(
-    ax=ax, dec=0, color="black", fontweight="bold", loc="top", minvalue=3
+sw.show_values( minvalue=100, maxvalue=200,
+    ax=ax, dec=0, color="black", fontweight="bold", loc="top"
 )
+# sw.set_values(dec=1, values=[1,2,3,4,5,6], color='red')
 sw.set_legend(
     title="Sexo",
     ncols=1,
@@ -36,16 +36,16 @@ sw.set_subtitle(title="Conteo de sobrevivientes")
 sw.set_tickslabel(
     axis="y",
     labelrotation=0,
-    loc="bottom",
-    xpad=10,
-    color="white",
-    # colors = ['#c1c1c1', 'white', 'white'],
+    loc='in',
+    xpad=0,
+    ypad=0,
+    color="blue",
+    # colors = ['white', 'red', 'white'],
     shadow=0.5,
-    shadowcolor="white",
-    labels=["Baja", "Media", "Alta", "Baja", "Media", "Alta"],
+    shadowcolor="black",
+    labels=["Baja", "Media", "Alta"],
 )
 sw.theme(op='spine', left=True, bottom=True, spine_butt='left')
 ax.xaxis.grid(True)
 ax.set_axisbelow(True)
-print(time.time() - start)
 plt.show()
