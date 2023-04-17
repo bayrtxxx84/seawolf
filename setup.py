@@ -6,9 +6,11 @@ _version = '0.1'
 
 setup(name='seawolf',
       version=_version,
-      description='Tools for plots',
+      description='Tools for matplotlib plots',
       author='Bayron Torres Gordillo',
       author_email='torres.bayron@gmail.com',
+      long_description=readme.read(),
+      long_description_content_type='text/markdown',
       install_requires=['numpy','pandas','seaborn','matplotlib'],
       packages=['seawolf'],
       include_package_data=True,
