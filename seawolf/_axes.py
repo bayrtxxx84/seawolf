@@ -686,8 +686,6 @@ def show_values(
         maxvalue=maxvalue,
         dec=dec,
         display=display,
-        prefix=prefix,
-        postfix=postfix,
         orient=orient,
         **kwargs,
     )

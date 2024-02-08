@@ -244,32 +244,34 @@ class _axTools(object):
                     data = pd.concat([data, data1])
         return data
 
-    def plot_values(ax=None, data: pd.DataFrame = None, minvalue: float = 0.0,
-                    dec: int = 2, ha: str = 'auto', va: str = 'auto', fontsize=_mpl.rcParams['font.size'],
+    def plot_values(ax=None, data: pd.DataFrame = None, 
+                    minvalue: float = 0.0, maxvalue: float = 0.0,
+                    dec: int = 2, ha: str = 'auto', va: str = 'auto', 
+                    fontsize=_mpl.rcParams['font.size'],
                     fontweight: str = 'normal', color='white', display: str = 'v',
                     orient: str = 'v', **kwargs):
 
         # Initial variables
-        te_mplate = _axTools.te_mplate_print_value(display)
-        fontsize = fontsize * 0.6 if fontsize > 10 else fontsize - 2
+        
+        template = _axTools.template_print_value(display)
+                
+        if isinstance(fontsize, str) != True:
+            fontsize = fontsize * 0.6 if fontsize > 10 else fontsize - 2
         axes = _axTools.get_axes(ax)
 
-        shadow = kwargs.get('shadow', 3)
-        if 'shadow' in kwargs:
-            del kwargs['shadow']
-
+        shadow = kwargs.get('shadow', 3)       
+        colors = kwargs.get('shadow', 3)
         shadowcolor = kwargs.get('shadowcolor', style.get_axesColor())
-        if 'shadowcolor' in kwargs:
-            del kwargs['shadowcolor']
+        _, kwargs = _axTools.get_init_kwargs(kwargs=kwargs, remove_kwargs=True)
 
         # Check if is Digit function
-
         def isDigit(x):
             try:
                 x = float(x)
                 return True
             except ValueError:
                 return False
+                
         # Segment data with True values
         data = data[data['value'].notnull()].copy().reset_index(inplace=False,
                                                                 drop=True)
@@ -292,8 +294,8 @@ class _axTools(object):
                 value = row[2]
                 value_norm = round(row[3]*100, dec)
                 graph = row[6]
-                if isDigit(value) and (minvalue is not None):
-                    valid_value = True if value >= minvalue else False
+                if isDigit(value):
+                    valid_value = True if (value >= minvalue and value <= maxvalue) else False
                 else:
                     valid_value = True
 
@@ -315,7 +317,7 @@ class _axTools(object):
                             va_h = 'center_baseline' if va == 'auto' else va
 
                         text = g.text(x, y,
-                                      te_mplate.substitute(value=value,
+                                      template.substitute(value=value,
                                                           value_norm=value_norm),
                                       fontsize=fontsize, color=c,
                                       ha=ha_h, va=va_h, fontweight=fontweight, **kwargs)
@@ -325,7 +327,7 @@ class _axTools(object):
 
                         if graph == 'line':
                             text = g.text(
-                                x, y, te_mplate.substitute(value=value,
+                                x, y, template.substitute(value=value,
                                                           value_norm=value_norm),
                                 fontsize=fontsize, color=c,
                                 ha=ha_h, va=va_h,
@@ -381,14 +383,66 @@ class _axTools(object):
                             xytext=((.75*data.x[i]), (.45*data.y[i])), **kw)
         return data
 
-    def te_mplate_print_value(display: str = str()):
+    def template_print_value(display: str = str()):
         if display == 'f':
-            te_mplate = Te_mplate('$value\n$value_norm%')
+            template = Template('$value\n$value_norm%')
         elif display == 'v':
-            te_mplate = Te_mplate('$value')
+            template = Template('$value')
         elif display == 'p':
-            te_mplate = Te_mplate('$value_norm%')
+            template = Template('$value_norm%')
         else:
             raise ValueError(
                 'The alternatives for display are "f=full", "v=values" or "p=percent"')
-        return te_mplate
+        return template
+
+    def get_init_kwargs(
+        kwargs,
+        remove_kwargs=True,
+        get_d=True,
+        inplace_kwargs=False,
+        defaults: dict = {},
+    ) -> tuple:
+        """
+        @brief Get kwargs to be used for initialization. This is a wrapper around : func : ` dict. get ` to allow the user to specify a set of keyword arguments that will be used to initialize the model.
+        @param kwargs A dictionary of keyword arguments to be initialized.
+        @param remove_kwargs If True the kwargs will be removed from the initial kwargs.
+        @param get_d If True the dictionary will be returned as - is.
+        @param inplace_kwargs If True the kwargs will be copied to the new dictionary instead of returned.
+        @param defaults A dictionary of default values to be used for initialization.
+        @return A tuple of the same length as the ` ` kwargs ` ` dictionary
+        """
+        keys = {
+            "color": style.get_ticksColor(),
+            "colors": style.get_ticksColor(),
+            "grid_color": style.get_ticksColor(),
+            "grid_alpha": 0.35,
+            "fontweight": "normal",
+            "fontsize": _mpl.rcParams["axes.labelsize"],
+            "shadow": 0,
+            "shadowcolor": style.get_axesColor(),
+            "xpad": 0,
+            "ypad": 0,
+            "va": "top",
+            "ha": "center",
+        }
+
+        for k, v in defaults.items():
+            keys[k] = v
+
+        dic_args = {}
+        if get_d:
+            values = list()
+            for k, v in keys.items():
+                values.append(kwargs.get(k, v))
+            dic_args = dict(zip(keys, values))
+
+        if remove_kwargs:
+            for key in keys:
+                if key in kwargs:
+                    del kwargs[key]
+
+        if inplace_kwargs:
+            for k, v in dic_args.items():
+                kwargs[k] = v
+
+        return dic_args, kwargs
