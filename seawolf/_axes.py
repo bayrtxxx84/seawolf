@@ -155,10 +155,13 @@ def set_tickslabel(
         for i in range(0, len(labels_ax) - len(labels)):
             labels.append(None)
 
+    ran = [*range(0,len(labels))]
+    ran = [x+.5 for x in ran]
+
     if(axis=="x") :
-        ax.xaxis.set_major_locator(_mpl.ticker.FixedLocator([*range(0,len(labels))]))
+        ax.xaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
     elif (axis=="y") :
-        ax.yaxis.set_major_locator(_mpl.ticker.FixedLocator([*range(0,len(labels))]))
+        ax.yaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
 
     if len(bgcolors) > 0:
         bbox = dict(boxstyle="square", alpha=0.3)
