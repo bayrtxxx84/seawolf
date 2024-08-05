@@ -244,22 +244,22 @@ class _axTools(object):
                     data = pd.concat([data, data1])
         return data
 
-    def plot_values(ax=None, data: pd.DataFrame = None, 
+    def plot_values(ax=None, data: pd.DataFrame = None,
                     minvalue: float = 0.0, maxvalue: float = 0.0,
-                    dec: int = 2, ha: str = 'auto', va: str = 'auto', 
+                    dec: int = 2, ha: str = 'auto', va: str = 'auto',
                     fontsize=_mpl.rcParams['font.size'],
                     fontweight: str = 'normal', color='white', display: str = 'v',
                     orient: str = 'v', **kwargs):
 
         # Initial variables
-        
+
         template = _axTools.template_print_value(display)
-                
+
         if isinstance(fontsize, str) != True:
             fontsize = fontsize * 0.6 if fontsize > 10 else fontsize - 2
         axes = _axTools.get_axes(ax)
 
-        shadow = kwargs.get('shadow', 3)       
+        shadow = kwargs.get('shadow', 3)
         colors = kwargs.get('shadow', 3)
         shadowcolor = kwargs.get('shadowcolor', style.get_axesColor())
         _, kwargs = _axTools.get_init_kwargs(kwargs=kwargs, remove_kwargs=True)
@@ -271,7 +271,7 @@ class _axTools(object):
                 return True
             except ValueError:
                 return False
-                
+
         # Segment data with True values
         data = data[data['value'].notnull()].copy().reset_index(inplace=False,
                                                                 drop=True)
@@ -349,8 +349,7 @@ class _axTools(object):
         for row in data.itertuples():
             total = grp['value'][(grp['type'] == row.type) & (
                 grp['index_color'] == row.index_color)].values[0]
-            data.loc[row.Index, 'value_norm'] = (
-                data.loc[row.Index, 'value']/total)
+            data['value_norm'] = data['value']/total
         return data
 
     def values_pie(ax, valid_wedges, frm, fontsize, dec, minvalue):
