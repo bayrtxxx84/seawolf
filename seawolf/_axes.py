@@ -421,7 +421,7 @@ def set_title(ax=None, title: str = str(), loc: str = "left", **kwargs) -> None:
         ax = _axTools.gca(ax)
 
     # Check if set figure or Axesplot
-    if isinstance(ax, _mpl.axes._subplots.SubplotBase):
+    if isinstance(ax, _mpl.axes.SubplotBase):
         ax = _axTools.gca(ax)
         ax.set_title(
             label=title,
