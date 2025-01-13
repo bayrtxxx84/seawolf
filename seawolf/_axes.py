@@ -155,6 +155,14 @@ def set_tickslabel(
         for i in range(0, len(labels_ax) - len(labels)):
             labels.append(None)
 
+    ran = [*range(0,len(labels))]
+    ran = [x+.5 for x in ran]
+
+    if(axis=="x") :
+        ax.xaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
+    elif (axis=="y") :
+        ax.yaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
+
     if len(bgcolors) > 0:
         bbox = dict(boxstyle="square", alpha=0.3)
         for i, c in enumerate(bgcolors):
@@ -174,34 +182,36 @@ def set_tickslabel(
             ax.axes.xaxis.set_visible(False)
             ax.axes.yaxis.set_visible(False)
             return
-    else:
-        if axis == "x":
-            if visible == False:
-                ax.axes.xaxis.set_visible(False)
-                return
-            else:
-                ax.axes.xaxis.set_visible(True)
-                ax.set_xticklabels(
-                    labels,
-                    rotation=labelrotation,
-                    ha=ha_text,
-                    va=va_text,
-                    weight=d["fontweight"],
-                )
+    elif axis == "x":
+        if visible == False:
+            ax.axes.xaxis.set_visible(False)
+            return
+        else:
+            ax.axes.xaxis.set_visible(True)
+            ax.set_xticklabels(
+                labels,
+                rotation=labelrotation,
+                ha=ha_text,
+                va=va_text,
+                weight=d["fontweight"],
+            )
 
-        if axis == "y":
-            if visible == False:
-                ax.axes.yaxis.set_visible(False)
-                return
-            else:
-                ax.axes.yaxis.set_visible(True)
-                ax.set_yticklabels(
-                    labels,
-                    rotation=labelrotation,
-                    ha=ha_text,
-                    va=va_text,
-                    weight=d["fontweight"],
-                )
+    elif axis == "y":
+        if visible == False:
+            ax.axes.yaxis.set_visible(False)
+            return
+        else:
+            ax.axes.yaxis.set_visible(True)
+            ax.set_yticklabels(
+                labels,
+                rotation=labelrotation,
+                ha=ha_text,
+                va=va_text,
+                weight=d["fontweight"],
+            )
+    else:
+        print("Axis not valid")
+
     # NO DIRECTION
     if loc is None:
         if axis == "x":

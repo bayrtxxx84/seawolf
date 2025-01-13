@@ -349,8 +349,7 @@ class _axTools(object):
         for row in data.itertuples():
             total = grp['value'][(grp['type'] == row.type) & (
                 grp['index_color'] == row.index_color)].values[0]
-            data.loc[row.Index, 'value_norm'] = (
-                data.loc[row.Index, 'value']/total)
+            data['value_norm'] = data['value']/total
         return data
 
     def values_pie(ax, valid_wedges, frm, fontsize, dec, minvalue):

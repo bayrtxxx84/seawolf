@@ -13,4 +13,4 @@ from ._axes import *
 from ._colors import ColorsSW as colors
 from ._style import StyleSW as style
 
-__version__ = "0.2"
+__version__ = "1.2"
