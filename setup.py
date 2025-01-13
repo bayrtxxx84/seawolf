@@ -1,8 +1,6 @@
 from __future__ import division, print_function
 from setuptools import setup
 
-
-<<<<<<< HEAD
 _version = '1.2'
 
 setup(name='seawolf',
