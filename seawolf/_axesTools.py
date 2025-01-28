@@ -26,9 +26,6 @@ class _axTools(object):
                   _mpl.collections.PolyCollection)
 
     def gca(ax):
-        if isinstance(ax, _mpl.axes.SubplotBase):
-            return ax
-        else:
             return plt.gca()
 
     def orient(ax=None):
@@ -37,7 +34,7 @@ class _axTools(object):
         axes = _axTools.get_axes(ax)
         rects = axes[0].patches
         if len(rects) > 0:
-            for k, t in enumerate(axes):
+            for _, t in enumerate(axes):
                 rects = t.patches
                 if len(rects) > 1:
                     if not isinstance(rects[0], _mpl.patches.Wedge):
@@ -84,58 +81,47 @@ class _axTools(object):
 
     def values_bars(ax=None, normBy: str() = 'c', loc: str() = 'top', stack=False):
         pos = 0
-        orient, factor = _axTools.orient(ax)
-        data = pd.DataFrame(columns=['x', 'y', 'value', 'value_norm', 'index_color',
-                                     'ax', 'type', 'color'])
-        data = data.astype({'x': 'float32', 'y': 'float32', 'value': 'float32',
-                            'ax': 'int32', 'index_color': 'int32', })
+        orient, _ = _axTools.orient(ax)
+        data = pd.DataFrame(columns=['x', 'y', 'value', 'value_norm',
+                                     'index_color','ax', 'type', 'color'])
+        data = data.astype({'x': 'float32', 'y': 'float32',
+                            'value': 'float32','ax': 'int32',
+                            'index_color': 'int32', })
         axes = _axTools.get_axes(ax)
         # Getting values
         for k, t in enumerate(axes):
-            h = 0
             hist = {}
             rects = t.patches
             if len(rects) > 1:
                 for rect in rects:
                     if not isinstance(rect, _mpl.patches.Wedge):
                         color = rect.get_fc()
+                        h = 0
                         if orient == 'v':
-                            value = 0 if math.isnan(
-                                rect.get_height()) == True else rect.get_height()
+                            value = (0 if math.isnan(rect.get_height()) else rect.get_height())
                             x = rect.get_x() + rect.get_width() / 2
                             if stack:
                                 h = hist[x] if x in hist else 0
-                            else:
-                                h = 0
-                            hist[x] = value + h
-                            y = value + h
+                            hist[x] = y = value + h
                         elif orient == 'h':
-                            value = 0 if math.isnan(
-                                rect.get_width()) else rect.get_width()
+                            value = (0 if math.isnan(rect.get_width()) else rect.get_width())
                             y = rect.get_y() + rect.get_height() / 2
                             if stack:
                                 h = hist[y] if y in hist else 0
-                            else:
-                                h = 0
-                            hist[y] = value + h
-                            x = value + h
-                        data.loc[pos] = (x, y, value, 0, 0,
-                                         int(k), 'bar', color)
+                            hist[y] = x = value + h
+                        data.loc[pos] = (x, y, value, 0, 0, int(k), 'bar', color)
                         pos = pos+1
             elif len(rects) == 1:
                 rect = rects[0]
                 if not isinstance(rect, _mpl.patches.Wedge):
                     color = rect.get_fc()
                     if orient == 'h':
-                        value = rect.get_width()
-                        x = rect.get_width()
+                        value = x = rect.get_width()
                         y = rect.get_x()
                     elif orient == 'v':
-                        value = rect.get_height()
-                        y = rect.get_height()
+                        value = y = rect.get_height()
                         x = rect.get_y()
-                    data.loc[pos] = (x, y, value, 0, 0,
-                                     int(k), 'bar', color)
+                    data.loc[pos] = (x, y, value, 0, 0, int(k), 'bar', color)
 
         # Grouping data by condition
         if normBy == 'g':
@@ -147,11 +133,9 @@ class _axTools(object):
                     data.loc[dt.index, 'index_color'] = i
         elif normBy == 'c':
             if orient == 'v':
-                data.loc[:, 'index_color'] = data.loc[:,
-                                                      'x'].round(0).astype('int')
+                data.loc[:, 'index_color'] = data.loc[:,'x'].round(0).astype('int')
             else:
-                data.loc[:, 'index_color'] = data.loc[:,
-                                                      'y'].round(0).astype('int')
+                data.loc[:, 'index_color'] = data.loc[:,'y'].round(0).astype('int')
         data.drop('color', axis=1, inplace=True)
 
         # Set position values
@@ -187,16 +171,16 @@ class _axTools(object):
             ax_all = list()
             color_all = list()
 
-            for k, ax in enumerate(axes):
+            for ax in axes:
                 lines = ax.lines
                 if len(lines) > 0:
-                    for j, l in enumerate(lines):
+                    for l in enumerate(lines):
                         y = l.get_ydata()
-                        ax_all.extend([k for x in y])
-                        color_all.extend([j for x in y])
+                        ax_all.extend(y.tolist())
+                        color_all.extend(y.tolist())
                         if all(isinstance(p, str) for p in y):
                             y = list(np.arange(0, len(y)))
-                        for i, txt in enumerate(y):
+                        for _ in y:
                             x = l.get_xdata()
                             if any(isinstance(p, str) for p in x):
                                 x = list(np.arange(0, len(x)))
@@ -261,6 +245,7 @@ class _axTools(object):
 
         shadow = kwargs.get('shadow', 3)
         colors = kwargs.get('shadow', 3)
+        rotation = kwargs.get('rotation', 0)
         shadowcolor = kwargs.get('shadowcolor', style.get_axesColor())
         _, kwargs = _axTools.get_init_kwargs(kwargs=kwargs, remove_kwargs=True)
 
@@ -319,7 +304,7 @@ class _axTools(object):
                         text = g.text(x, y,
                                       template.substitute(value=value,
                                                           value_norm=value_norm),
-                                      fontsize=fontsize, color=c,
+                                      fontsize=fontsize, color=c, rotation=rotation,
                                       ha=ha_h, va=va_h, fontweight=fontweight, **kwargs)
                     else:
                         ha_h = 'center' if ha == 'auto' else ha
@@ -384,8 +369,8 @@ class _axTools(object):
 
     def template_print_value(display: str = str()):
         if display == 'fv':
-            template = Template('$value_norm%\n$value')
-        if display == 'fh':
+            template = Template('$value_norm%\n($value)')
+        elif display == 'fh':
             template = Template('$value_norm% ($value)')
         elif display == 'v':
             template = Template('$value')
@@ -425,6 +410,7 @@ class _axTools(object):
             "ypad": 0,
             "va": "top",
             "ha": "center",
+            "rotation": 0
         }
 
         for k, v in defaults.items():

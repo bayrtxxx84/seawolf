@@ -29,10 +29,6 @@ def set_axislabel(
     # Setting font style
     font = {"color": d["color"], "fontweight": d["fontweight"], "size": d["fontsize"]}
 
-    if xlabel is not None:
-        xlabel = xlabel.strip()
-    if ylabel is not None:
-        ylabel = ylabel.strip()
     # If not FaceGrid plot
     if isinstance(ax, _sns.axisgrid.FacetGrid):
         # If is FaceGrid plot
@@ -121,7 +117,6 @@ def set_tickslabel(
         def_dic = {"va": "center_baseline", "ha": "center"}
 
     d, kwargs = _axTools.get_init_kwargs(kwargs, defaults=def_dic)
-    print(kwargs)
 
     locs = ["in", "on", "bottom", "top", "left", "right", None]
     if not loc in locs:
@@ -156,7 +151,6 @@ def set_tickslabel(
             labels.append(None)
 
     ran = [*range(0,len(labels))]
-    ran = [x+.5 for x in ran]
 
     if(axis=="x") :
         ax.xaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
@@ -623,8 +617,6 @@ def show_values(
     kind: str = "bar",
     normBy: str = "c",
     display: str = "v",
-    prefix: str = "",
-    postfix: str = "",
     stack=False,
     **kwargs,
 ) -> _plt.Axes:
