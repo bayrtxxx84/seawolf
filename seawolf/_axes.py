@@ -93,262 +93,80 @@ def get_tickslabel(ax=None) -> tuple:
 
 
 def set_tickslabel(
-    ax=None,
-    axis: str = "x",
-    visible: bool = True,
-    labels: list = (),
-    labelrotation: int = 0,
-    loc=None,
-    limit=_np.Infinity,
-    bgcolors=list(),
-    **kwargs,
+    ax=None, axis: str = "x", visible: bool = True,
+    labels: list = [], rotation: int = 0, loc="default",
+    bgcolors=list(), **kwargs,
 ) -> _plt.Axes:
+
     ax = _axTools.gca(ax)
-
-    if labels is None:
-        labels = list()
-
-    if loc == "None":
-        if axis == "x":
-            def_dic = {"va": "top", "ha": "center"}
-        elif axis == "y":
-            def_dic = {"va": "center", "ha": "right"}
-    else:
-        def_dic = {"va": "center_baseline", "ha": "center"}
-
-    d, kwargs = _axTools.get_init_kwargs(kwargs, defaults=def_dic)
-
-    locs = ["in", "on", "bottom", "top", "left", "right", None]
-    if not loc in locs:
-        raise ValueError("The value in LOC is not recognized: {0}".format(locs))
-
-    orient, _ = _axTools.orient(ax)
+    d, kwargs = _axTools.get_init_kwargs(kwargs)
+    shadow_line =d["shadow"]
 
     fig = ax.get_figure()
     fig.canvas.draw()
 
-    ax.tick_params(
-        grid_color=d["grid_color"],
-        color=d["color"],
-        grid_alpha=d["grid_alpha"],
-        labelsize=d["fontsize"],
-        axis=axis,
-        labelrotation=labelrotation,
-        **kwargs,
-    )
-
-    if axis == "x":
-        labels_ax = ax.get_xticklabels()
-    elif axis == "y":
-        labels_ax = ax.get_yticklabels()
-    else:
-        raise ValueError("axis value {0} is not available".format(axis))
-
-    if len(labels) == 0:
-        labels = [l.get_text() for l in labels_ax]
-    elif len(labels) < len(labels_ax):
-        for i in range(0, len(labels_ax) - len(labels)):
-            labels.append(None)
-
-    ran = [*range(0,len(labels))]
-
-    if(axis=="x") :
-        ax.xaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
-    elif (axis=="y") :
-        ax.yaxis.set_major_locator(_mpl.ticker.FixedLocator(ran))
-
-    if len(bgcolors) > 0:
-        bbox = dict(boxstyle="square", alpha=0.3)
-        for i, c in enumerate(bgcolors):
-            labels_ax[i].set_bbox(bbox)
-            labels_ax[i].set_backgroundcolor(c)
-
-    if isinstance(d["colors"], list):
-        colors = d["colors"]
-    else:
-        colors = _axTools.getColorList(len(labels), d["colors"])
-
-    va_text = d["va"]
-    ha_text = d["ha"]
-
-    if axis == "both":
+    if axis in ["x", "y"]:
         if visible == False:
-            ax.axes.xaxis.set_visible(False)
-            ax.axes.yaxis.set_visible(False)
-            return
-    elif axis == "x":
-        if visible == False:
-            ax.axes.xaxis.set_visible(False)
-            return
-        else:
-            ax.axes.xaxis.set_visible(True)
-            ax.set_xticklabels(
-                labels,
-                rotation=labelrotation,
-                ha=ha_text,
-                va=va_text,
-                weight=d["fontweight"],
-            )
-
-    elif axis == "y":
-        if visible == False:
-            ax.axes.yaxis.set_visible(False)
-            return
-        else:
-            ax.axes.yaxis.set_visible(True)
-            ax.set_yticklabels(
-                labels,
-                rotation=labelrotation,
-                ha=ha_text,
-                va=va_text,
-                weight=d["fontweight"],
-            )
-    else:
-        print("Axis not valid")
-
-    # NO DIRECTION
-    if loc is None:
-        if axis == "x":
-            ax.set_xticks(ax.get_xticks())
-            for color, tick in zip(colors, ax.xaxis.get_major_ticks()):
-                tick.label1.set_color(color)
-
-        if axis == "y":
-            ax.set_yticks(ax.get_yticks())
-            for color, tick in zip(colors, ax.yaxis.get_major_ticks()):
-                tick.label1.set_color(color)
-
-    else:
-        if len(colors) < len(labels):
-            _aux_ = _axTools.getColorList((len(labels) - len(colors)), d["color"])
-            colors.extend(_aux_)
-
-        def get_data():
-            data = _axTools.values_bars(ax)
-            mask = data["value"] >= limit
-            data.loc[mask, "value"] = 0
-            return data
-
-        values_iterables = None
-
-        if loc in ["bottom", "in", "on"]:
-            data = get_data()
-            posY = data["value"]
-
             if axis == "x":
-                posX = [x.get_position()[0] for x in labels_ax]
-            else:
-                posX = [x.get_position()[1] for x in labels_ax]
-
-            if loc == "bottom":
-                if len(labels) != len(posY):
-                    posY = [0] * data.shape[0]
-
-            else:
-                if loc in ["in", "on"]:
-                    if axis == "x":
-                        posX = data["x"]
-                    else:
-                        posX = data["y"]
-
-                    if loc == "in":
-                        posY = [x / 2 for x in posY]
-
-                    if len(labels) != len(posY):
-                        factor = int(len(posY) / len(labels))
-                        labels = labels * factor
-                        colors = colors * factor
-
-            if axis == "x":
-                ax.set_xticklabels([])
-                values_iterables = zip(labels, posX, posY, colors)
+                ax.axes.xaxis.set_visible(False)
             elif axis == "y":
-                ax.set_yticklabels([])
-                values_iterables = zip(labels, posY, posX, colors)
+                ax.axes.yaxis.set_visible(False)
+            return
 
-        else:
-            if orient == "v":
-                if axis == "y":
-                    if loc == "right":
-                        ax.yaxis.set_ticks_position("right")
-                        ax.yaxis.set_label_position("right")
-                    elif loc == "left":
-                        ax.yaxis.set_ticks_position("left")
-                        ax.yaxis.set_label_position("left")
-                    elif loc == "top":
-                        print(
-                            "Loc '{0}' is not available in axis {1}".format(loc, axis)
-                        )
+        if axis == "x":
+            ticklabels = ax.get_xticklabels()
+            ax.xaxis.set_ticks_position(loc)
+        elif axis == "y":
+            ticklabels = ax.get_yticklabels()
+            ax.yaxis.set_ticks_position(loc)
 
-                elif axis == "x":
-                    if loc in ["left", "right"]:
-                        print(
-                            "Loc '{0}' is not available in axis {1}".format(loc, axis)
-                        )
-                    elif loc == "top":
-                        ax.xaxis.set_ticks_position("top")
-                        ax.xaxis.set_label_position("top")
+        labels_ax = [t.get_text() for t in ticklabels]
 
-            elif orient == "h":
-                if axis == "x":
-                    if loc == "top":
-                        ax.xaxis.set_ticks_position("top")
-                        ax.xaxis.set_label_position("top")
-                    else:
-                        print(
-                            "Loc '{0}' is not available in axis {1}".format(loc, axis)
-                        )
-                elif axis == "y":
-                    if loc in ["right", "top"]:
-                        ax.yaxis.set_ticks_position("right")
-                        ax.yaxis.set_label_position("right")
-                    elif loc == "left":
-                        ax.yaxis.set_ticks_position("left")
-                        ax.yaxis.set_label_position("left")
+        if isinstance(labels, list):
+            if labels:
+                del labels[len(ticklabels):]
+                for i in [*range(0, len(labels))]:
+                    labels_ax[i] = labels[i]
+        elif isinstance(labels, dict):
+            for i, v in zip(labels.keys(), labels.values()):
+                labels_ax[i] = v
 
-        if not values_iterables is None:
+        if len(bgcolors) > 0:
+            del bgcolors[len(ticklabels):]
+            bbox = dict(boxstyle="square", alpha=0.3)
+            for i, c in enumerate(bgcolors):
+                ticklabels[i].set_bbox(bbox)
+                ticklabels[i].set_backgroundcolor(c)
+
+        if axis == "x":
+            ax.xaxis.set_ticks([l.get_position()[0] for l in ticklabels],
+                            labels=labels_ax,
+                            rotation=rotation,
+                            weight="normal"
+                            )
+
+        elif axis == "y":
+            ax.yaxis.set_ticks([l.get_position()[1] for l in ticklabels],
+                            labels=labels_ax,
+                            rotation=rotation,
+                            weight="normal"
+                            )
+
+        if shadow_line > 0:
+            shadow_color = kwargs.get("shadow_color", d["shadow_color"])
             effects = [
                 path_effects.Stroke(
-                    linewidth=d["shadow"],
-                    foreground=d["shadowcolor"],
+                    linewidth=shadow_line,
+                    foreground=shadow_color,
                     alpha=0.8,
                 ),
                 path_effects.Normal(),
             ]
+            for t in ticklabels:
+                t.set_path_effects(effects)
+    else:
+        raise ValueError("axis value {0} is not available".format(axis))
 
-            for name, x_pos, y_pos, c in values_iterables:
-                if orient == "h":
-                    PADT = -1 * d["xpad"] if x_pos < 0 else d["xpad"]
-                    if x_pos >= 0:
-                        ha_text = "left"
-                    elif x_pos < 0:
-                        ha_text = "right"
-                    x_pos = x_pos + PADT
-                    y_pos = y_pos + d["ypad"]
-                else:
-                    PADT = -1 * d["ypad"] if y_pos < 0 else d["ypad"]
-                    if x_pos >= 0:
-                        va_text = "bottom"
-                    elif x_pos < 0:
-                        va_text = "top"
-                    y_pos = y_pos + PADT
-                    x_pos = x_pos + d["xpad"]
-
-                t = ax.text(
-                    x_pos,
-                    y_pos,
-                    name,
-                    va=va_text,
-                    rotation=labelrotation,
-                    color=c,
-                    fontsize=d["fontsize"],
-                    ha=ha_text,
-                    weight=d["fontweight"],
-                    path_effects=effects,
-                )
-
-                if d["shadow"] > 0:
-                    t.set_path_effects(effects)
     return ax
 
 
@@ -623,12 +441,7 @@ def show_values(
     ax = _axTools.gca(ax)
     orient = "v"
 
-    d, kwargs = _axTools.get_init_kwargs(
-        kwargs,
-        remove_kwargs=False,
-        inplace_kwargs=True,
-        defaults={"va": "auto", "ha": "auto"},
-    )
+    d, kwargs = _axTools.get_init_kwargs(kwargs)
 
     if dec == None:
         dec = 2 if display != "v" else 1
@@ -663,9 +476,13 @@ def show_values(
                     new_dat[i] = dfy[i] + d["ypad"]
             data.loc[data["index_color"] == u, "y"] = new_dat
 
+        # For x values
+        data["x"] = data["x"] + d["xpad"]
+
         # Normalizing data
         if display != "v":
             data = _axTools.normalize_data(data)
+
     # Points shape
     elif kind == "point":
         data = _axTools.values_points(ax)
@@ -689,7 +506,7 @@ def show_values(
         dec=dec,
         display=display,
         orient=orient,
-        **kwargs,
+        **kwargs
     )
 
 
@@ -708,9 +525,7 @@ def set_values(
     orient = "v"
 
     ax = _axTools.gca(ax)
-    d, _ = _axTools.get_init_kwargs(
-        kwargs=kwargs, remove_kwargs=False, inplace_kwargs=True
-    )
+    d, _ = _axTools.get_init_kwargs(kwargs=kwargs)
 
     if values is not None or not isinstance(values, (list)):
         if kind == "bar":

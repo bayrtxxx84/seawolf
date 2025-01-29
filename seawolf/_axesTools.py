@@ -17,6 +17,16 @@ from ._style import StyleSW as style
 
 class _axTools(object):
 
+    __keys__ = {
+            "color": style.get_ticksColor(),
+            "colors": style.get_ticksColor(),
+            "shadow" : 0,
+            "shadow_color": style.get_axesColor(),
+            "xpad": 0,
+            "ypad": 0,
+            "rotation": 0
+        }
+
     artistList = (_mpl.patches.Wedge,
                   _mpl.patches.Ellipse,
                   _mpl.patches.Circle,
@@ -175,13 +185,13 @@ class _axTools(object):
                 lines = ax.lines
                 if len(lines) > 0:
                     for l in enumerate(lines):
-                        y = l.get_ydata()
+                        y = l[1].get_ydata()
                         ax_all.extend(y.tolist())
                         color_all.extend(y.tolist())
                         if all(isinstance(p, str) for p in y):
                             y = list(np.arange(0, len(y)))
                         for _ in y:
-                            x = l.get_xdata()
+                            x = l[1].get_xdata()
                             if any(isinstance(p, str) for p in x):
                                 x = list(np.arange(0, len(x)))
                         if len(x) > 0 and len(y) > 0:
@@ -198,10 +208,11 @@ class _axTools(object):
                 data['value'] = y_all
             # Set other columns values
             data['index_color'] = color_all
-            data['ax'] = ax_all
+            data['ax'] = 0
             data['type'] = 'line'
             data['value_norm'] = 0
         # Setting data types
+        data = data[data['index_color'].notna()]
         data = data.astype({'index_color': 'int32', 'ax': 'int32'})
         data = data[pd.notna(data['value'])].reset_index()
         return data.drop('index', axis=1)
@@ -232,22 +243,20 @@ class _axTools(object):
                     minvalue: float = 0.0, maxvalue: float = 0.0,
                     dec: int = 2, ha: str = 'auto', va: str = 'auto',
                     fontsize=_mpl.rcParams['font.size'],
-                    fontweight: str = 'normal', color='white', display: str = 'v',
+                    fontweight: str = 'normal', color='black',
+                    display: str = 'v',
                     orient: str = 'v', **kwargs):
-
         # Initial variables
-
         template = _axTools.template_print_value(display)
 
         if isinstance(fontsize, str) != True:
             fontsize = fontsize * 0.6 if fontsize > 10 else fontsize - 2
         axes = _axTools.get_axes(ax)
 
-        shadow = kwargs.get('shadow', 3)
-        colors = kwargs.get('shadow', 3)
-        rotation = kwargs.get('rotation', 0)
-        shadowcolor = kwargs.get('shadowcolor', style.get_axesColor())
-        _, kwargs = _axTools.get_init_kwargs(kwargs=kwargs, remove_kwargs=True)
+        d , kwargs = _axTools.get_init_kwargs(kwargs=kwargs, clean=True)
+        shadow = d['shadow']
+        rotation = d['rotation']
+        shadow_color = d['shadow_color']
 
         # Check if is Digit function
         def isDigit(x):
@@ -296,7 +305,7 @@ class _axTools(object):
 
                         else:
                             if ha == 'auto':
-                                ha_h = 'left' if x > 0 else 'right'
+                                ha_h = 'right' if x > 0 else 'left'
                             else:
                                 ha_h = ha
                             va_h = 'center_baseline' if va == 'auto' else va
@@ -309,7 +318,6 @@ class _axTools(object):
                     else:
                         ha_h = 'center' if ha == 'auto' else ha
                         va_h = 'center_baseline' if va == 'auto' else va
-
                         if graph == 'line':
                             text = g.text(
                                 x, y, template.substitute(value=value,
@@ -323,7 +331,7 @@ class _axTools(object):
                     if shadow > 0:
                         text.set_path_effects([
                             path_effects.Stroke(
-                                linewidth=shadow, foreground=shadowcolor, alpha=.8),
+                                linewidth=shadow, foreground=shadow_color, alpha=.8),
                             path_effects.Normal()])
 
     def normalize_data(df: pd.DataFrame = None):
@@ -381,55 +389,21 @@ class _axTools(object):
                 'The alternatives for display are "f=full", "v=values" or "p=percent"')
         return template
 
-    def get_init_kwargs(
-        kwargs,
-        remove_kwargs=True,
-        get_d=True,
-        inplace_kwargs=False,
-        defaults: dict = {},
-    ) -> tuple:
-        """
-        @brief Get kwargs to be used for initialization. This is a wrapper around : func : ` dict. get ` to allow the user to specify a set of keyword arguments that will be used to initialize the model.
-        @param kwargs A dictionary of keyword arguments to be initialized.
-        @param remove_kwargs If True the kwargs will be removed from the initial kwargs.
-        @param get_d If True the dictionary will be returned as - is.
-        @param inplace_kwargs If True the kwargs will be copied to the new dictionary instead of returned.
-        @param defaults A dictionary of default values to be used for initialization.
-        @return A tuple of the same length as the ` ` kwargs ` ` dictionary
-        """
-        keys = {
-            "color": style.get_ticksColor(),
-            "colors": style.get_ticksColor(),
-            "grid_color": style.get_ticksColor(),
-            "grid_alpha": 0.35,
-            "fontweight": "normal",
-            "fontsize": _mpl.rcParams["axes.labelsize"],
-            "shadow": 0,
-            "shadowcolor": style.get_axesColor(),
-            "xpad": 0,
-            "ypad": 0,
-            "va": "top",
-            "ha": "center",
-            "rotation": 0
-        }
-
-        for k, v in defaults.items():
-            keys[k] = v
+    def get_init_kwargs(kwargs, defaults: dict={}, clean=False) -> tuple:
 
         dic_args = {}
-        if get_d:
-            values = list()
-            for k, v in keys.items():
-                values.append(kwargs.get(k, v))
-            dic_args = dict(zip(keys, values))
+        values = list()
 
-        if remove_kwargs:
-            for key in keys:
+        for k, v in _axTools.__keys__.items():
+            values.append(kwargs.get(k, v))
+        dic_args = dict(zip(_axTools.__keys__, values))
+
+        for k, v in defaults.items():
+            dic_args[k] = v
+
+        if clean:
+            for key in _axTools.__keys__:
                 if key in kwargs:
                     del kwargs[key]
-
-        if inplace_kwargs:
-            for k, v in dic_args.items():
-                kwargs[k] = v
 
         return dic_args, kwargs
