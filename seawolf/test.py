@@ -1,51 +1,42 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat May 23 07:40:01 2020
-
-@author: Bayron
-"""
-
-import seaborn as sns
-import pandas as pd
-import matplotlib.pyplot as plt
 import seawolf as sw
-import time
 
-url = "https://raw.github.com/mattdelhey/kaggle-titanic/master/Data/train.csv"
-titanic = pd.read_csv(url)
-# print(titanic.columns)
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-sw.style.set(figsize=(8, 6))
+# Datos de ejemplo para la gráfica apilada
+categorias = ["A", "B", "C", "D"]
+valores1 = [5, 7, 3, 4]
+valores2 = [2, 3, 4, 1]
 
-ax = sns.countplot(data=titanic, y="pclass", hue='sex')
-sw.show_values( minvalue=100, maxvalue=200,
-    ax=ax, dec=0, color="black", fontweight="bold", loc="top"
-)
-# sw.set_values(dec=1, values=[1,2,3,4,5,6], color='red')
-sw.set_legend(
-    title="Sexo",
-    ncols=1,
-    labels=["Hombre", "Mujer"],
-    label_fontsize=8,
-    title_fontsize=10,
-    title_loc="center",
-    borderpad=1.22,
-)
-sw.set_title(title="Tabla 3", fontweight="bold")
-sw.set_subtitle(title="Conteo de sobrevivientes")
-sw.set_tickslabel(
-    axis="y",
-    labelrotation=0,
-    loc='in',
+plt.style.use('petroff10')
+
+fig, ax = plt.subplots()
+ax.barh(categorias, valores1, label="Grupo 1", zorder=2)
+ax.barh(categorias, valores2, left=valores1, label="Grupo 2", zorder=3)
+ax.grid(axis="x", linestyle="--", alpha=0.7, zorder=99)
+sw.show_values(
+    ax=ax,
+    kind="bar",
+    loc="center",
+    dec=1,
     xpad=0,
-    ypad=0,
-    color="blue",
-    # colors = ['white', 'red', 'white'],
-    shadow=0.5,
-    shadowcolor="black",
-    labels=["Baja", "Media", "Alta"],
+    kw_args={"color": "black", "fontsize": 10, "fontweight": "bold"},
 )
-sw.theme(op='spine', left=True, bottom=True, spine_butt='left')
-ax.xaxis.grid(True)
-ax.set_axisbelow(True)
+sw.set_title(
+    ax=ax,
+    title="Gráfica de barras apiladas",
+    loc="left",
+    kw_args={"rotation": 0, "fontweight": "bold", "fontsize": 14, "color": "black"},
+)
+sw.set_subtitle(
+    ax=ax,
+    subtitle="Subtítulo de la gráfica",
+    loc="left",
+    kw_args={"fontsize": 10, "color": "gray"},
+)
+sw.set_legend(ax=ax, title="Grupos", label_fontsize=7, title_loc="left", ncols=2,
+              kw_args={"reverse": True})
+
+sw.theme(ax=ax, op="despine", top=True, right=True, despine_offset=5)
+plt.tight_layout()
 plt.show()
