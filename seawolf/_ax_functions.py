@@ -26,8 +26,13 @@ class _axTools(object):
     def __init__(self) -> None:
         self.color = "#0B0201"
 
-    def __print_values_plot__(self, ax: Axes, x=0, y=0, s="", **kwargs):
-        ax.text(x=x, y=y, s=s, **kwargs)
+    def __print_values_plot__(self, ax: Axes, x=0, y=0,  value=0, 
+                              prefix="", dec=0 , **kwargs):
+        if dec == 0:
+            data_value = int(value)
+        else:
+            data_value = np.round(value, dec)
+        ax.text(x=x, y=y, s=f"{data_value}{prefix}", **kwargs)
 
     def __get_orientation__(self, ax: Axes) -> str:
         try:
@@ -75,6 +80,17 @@ class _axTools(object):
             ypad = args.get("ypad", 0)
             loc = args.get("loc", "top")
             prefix = args.get("prefix", "")
+            min_val = args.get("min_value", -np.inf)
+            max_val = args.get("max_value", np.inf)
+            
+            def set_new_value(value=0):
+                if loc == "bottom":
+                    new_value = 0
+                elif loc == "center":
+                    new_value = value / 2
+                else:
+                    new_value = value
+                return new_value
 
             if orient == "h":
                 kwargs["ha"] = kwargs.get("ha", "center")
@@ -89,41 +105,36 @@ class _axTools(object):
                     width = 0 if math.isnan(bar.get_width()) else bar.get_width()
 
                     if orient == "h":
-                        pos = bar.get_y()
-                        if loc == "bottom":
-                            value = 0
-                        elif loc == "center":
-                            value = width / 2
-                        else:
-                            value = width
-                        value = value + hist.get(pos, 0)
-
-                        self.__print_values_plot__(
-                            axs,
-                            x=value + xpad,
-                            y=bar.get_y() + height / 2,
-                            s=f"{np.round(width, dec)}{prefix}",
-                            **kwargs,
-                        )
-                        hist[pos] = width + hist.get(pos, 0)
+                        if (width>=min_val) and (width<=max_val):
+                            pos = bar.get_y()
+                            value = set_new_value(width) + hist.get(pos, 0)
+                                
+                            self.__print_values_plot__(
+                                axs,
+                                x=value + xpad,
+                                y=bar.get_y() + height / 2,
+                                dec=dec,
+                                value = width,
+                                prefix =prefix,
+                                **kwargs,
+                            )
+                            hist[pos] = width + hist.get(pos, 0)
 
                     else:
-                        pos = bar.get_x()
-                        if loc == "bottom":
-                            value = 0
-                        elif loc == "center":
-                            value = height / 2
-                        else:
-                            value = height
-                        value = value + hist.get(pos, 0)
-                        self.__print_values_plot__(
-                            axs,
-                            x=bar.get_x() + width / 2,
-                            y=value + ypad,
-                            s=f"{np.round(height, dec)}{prefix}",
-                            **kwargs,
-                        )
-                        hist[pos] = height + hist.get(pos, 0)
+                        if (height>=min_val) and (height<=max_val):
+                            pos = bar.get_x()
+                            value = set_new_value(height) + hist.get(pos, 0)
+                                                    
+                            self.__print_values_plot__(
+                                axs,
+                                x=bar.get_x() + width / 2,
+                                y=value + ypad,
+                                dec=dec,
+                                value=height,
+                                prefix=prefix,
+                                **kwargs,
+                            )
+                            hist[pos] = height + hist.get(pos, 0)
 
         except Exception as e:
             raise e

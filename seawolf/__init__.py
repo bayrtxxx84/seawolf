@@ -11,4 +11,4 @@ Created on Wed Jun 12 09:55:53 2019
 # Seawolf packages
 from ._axes import *
 
-__version__ = "2.0.3"
+__version__ = "2.0.4"

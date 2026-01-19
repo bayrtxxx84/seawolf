@@ -1,3 +1,4 @@
+import numpy as np
 from ._ax_functions import _axTools
 
 __axf__ = _axTools()
@@ -9,11 +10,14 @@ def show_values(
     dec=3,
     loc="top",
     prefix: str = "",
+    min_value=-np.inf,
+    max_value=np.inf,
     xpad: float = 0,
     ypad: float = 0,
     kw_args={},
 ):
-    args = {"dec": dec, "xpad": xpad, "ypad": ypad, "loc": loc, "prefix": prefix}
+    args = {"dec": dec, "xpad": xpad, "ypad": ypad, "loc": loc, "prefix": prefix,
+            "min_value":min_value, "max_value": max_value}
 
     if kind == "bar":
         __axf__.show_values_bar(ax=ax, args=args, **kw_args)
